@@ -58,7 +58,6 @@ public class MenuEndereco {
     private void adicionarEndereco() {
         System.out.println("=====Adicionar Endereço=====");
 
-        // Buscar pacientes do banco
         ArrayList<Paciente> pacientes = pacienteDAO.findAll();
 
         if (pacientes.isEmpty()) {
@@ -88,26 +87,44 @@ public class MenuEndereco {
 
         Paciente paciente = pacientes.get(indicePaciente);
 
-        System.out.print("Estado: ");
-        String estado = scanner.nextLine();
-
-        System.out.print("Cidade: ");
-        String cidade = scanner.nextLine();
-
-        System.out.print("Rua: ");
-        String rua = scanner.nextLine();
+        System.out.print("CEP: ");
+        String cep = scanner.nextLine().trim();
 
         System.out.print("Número: ");
-        String numero = scanner.nextLine();
+        String numero = scanner.nextLine().trim();
 
-        System.out.print("CEP: ");
-        String cep = scanner.nextLine();
-
-        UUID idEndereco = UUID.randomUUID();
-        Endereco endereco = new Endereco(idEndereco, estado, cidade, rua, numero, cep);
-
-        // Salvar no banco
-        enderecoDAO.insert(endereco, paciente.getIdPaciente().toString());
+        Endereco enderecoViaCep = com.consultorioMedicoJava.util.ViaCepClient.lookup(cep);
+        if (enderecoViaCep == null) {
+            System.out.println("Não foi possível localizar o CEP via ViaCep. Informe manualmente os dados do endereço.");
+            System.out.print("Estado: ");
+            String estado = scanner.nextLine();
+            System.out.print("Cidade: ");
+            String cidade = scanner.nextLine();
+            System.out.print("Rua: ");
+            String rua = scanner.nextLine();
+            UUID idEndereco = UUID.randomUUID();
+            Endereco endereco = new Endereco(idEndereco, estado, cidade, rua, numero, cep);
+            enderecoDAO.insert(endereco, paciente.getIdPaciente().toString());
+        } else {
+            String estado = enderecoViaCep.getEstado();
+            String cidade = enderecoViaCep.getCidade();
+            String rua = enderecoViaCep.getRua();
+            if (estado == null || estado.isBlank()) {
+                System.out.print("Estado não retornado pelo ViaCep. Informe o Estado: ");
+                estado = scanner.nextLine();
+            }
+            if (cidade == null || cidade.isBlank()) {
+                System.out.print("Cidade não retornada pelo ViaCep. Informe a Cidade: ");
+                cidade = scanner.nextLine();
+            }
+            if (rua == null || rua.isBlank()) {
+                System.out.print("Rua não retornada pelo ViaCep. Informe a Rua: ");
+                rua = scanner.nextLine();
+            }
+            UUID idEndereco = UUID.randomUUID();
+            Endereco endereco = new Endereco(idEndereco, estado, cidade, rua, numero, cep);
+            enderecoDAO.insert(endereco, paciente.getIdPaciente().toString());
+        }
 
         System.out.println("Endereço adicionado com sucesso ao paciente " + paciente.getNome() + "!");
     }
@@ -153,7 +170,6 @@ public class MenuEndereco {
         System.out.print("Digite o CPF do paciente: ");
         String cpf = scanner.nextLine();
 
-        // Buscar paciente do banco
         Paciente paciente = pacienteDAO.findByCpf(cpf);
 
         if (paciente == null) {
@@ -161,7 +177,6 @@ public class MenuEndereco {
             return;
         }
 
-        // Buscar endereço do banco
         Endereco endereco = enderecoDAO.findByPacienteId(paciente.getIdPaciente().toString());
 
         if (endereco == null) {
@@ -169,30 +184,53 @@ public class MenuEndereco {
             return;
         }
 
-        System.out.println("=====Novo Endereço=====");
-        System.out.print("Estado: ");
-        String estado = scanner.nextLine();
+        System.out.print("Informe o CEP (deixe vazio para manter): ");
+        String cep = scanner.nextLine().trim();
 
-        System.out.print("Cidade: ");
-        String cidade = scanner.nextLine();
+        System.out.print("Informe o número da residência (deixe vazio para manter): ");
+        String numero = scanner.nextLine().trim();
 
-        System.out.print("Rua: ");
-        String rua = scanner.nextLine();
+        if (!cep.isEmpty()) {
+            Endereco enderecoViaCep = com.consultorioMedicoJava.util.ViaCepClient.lookup(cep);
+            if (enderecoViaCep == null) {
+                System.out.println("Não foi possível localizar o CEP via ViaCep. Informe manualmente os dados do endereço.");
+                System.out.print("Estado: ");
+                String estado = scanner.nextLine();
+                System.out.print("Cidade: ");
+                String cidade = scanner.nextLine();
+                System.out.print("Rua: ");
+                String rua = scanner.nextLine();
+                endereco.setEstado(estado);
+                endereco.setCidade(cidade);
+                endereco.setRua(rua);
+                endereco.setCep(cep);
+            } else {
+                String estado = enderecoViaCep.getEstado();
+                String cidade = enderecoViaCep.getCidade();
+                String rua = enderecoViaCep.getRua();
+                if (estado == null || estado.isBlank()) {
+                    System.out.print("Estado não retornado pelo ViaCep. Informe o Estado: ");
+                    estado = scanner.nextLine();
+                }
+                if (cidade == null || cidade.isBlank()) {
+                    System.out.print("Cidade não retornada pelo ViaCep. Informe a Cidade: ");
+                    cidade = scanner.nextLine();
+                }
+                if (rua == null || rua.isBlank()) {
+                    System.out.print("Rua não retornada pelo ViaCep. Informe a Rua: ");
+                    rua = scanner.nextLine();
+                }
+                endereco.setEstado(estado);
+                endereco.setCidade(cidade);
+                endereco.setRua(rua);
+                endereco.setCep(cep);
+            }
+        }
 
-        System.out.print("Número: ");
-        String numero = scanner.nextLine();
+        if (!numero.isEmpty()) {
+            endereco.setNumero(numero);
+        }
 
-        System.out.print("CEP: ");
-        String cep = scanner.nextLine();
-
-        // Atualizar endereço
-        endereco.setEstado(estado);
-        endereco.setCidade(cidade);
-        endereco.setRua(rua);
-        endereco.setNumero(numero);
-        endereco.setCep(cep);
-
-        // Salvar no banco
         enderecoDAO.update(endereco, paciente.getIdPaciente().toString());
 
         System.out.println("Endereço atualizado com sucesso!");
