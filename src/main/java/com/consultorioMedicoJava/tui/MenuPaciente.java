@@ -1,6 +1,7 @@
 package com.consultorioMedicoJava.tui;
 
-
+import com.consultorioMedicoJava.dao.PacienteDAO;
+import com.consultorioMedicoJava.dao.EnderecoDAO;
 import com.consultorioMedicoJava.model.Paciente;
 import com.consultorioMedicoJava.model.Endereco;
 import java.util.ArrayList;
@@ -9,12 +10,11 @@ import java.util.UUID;
 
 public class MenuPaciente {
 
-    private ArrayList<Paciente> pacientes = new ArrayList<>();
+    private PacienteDAO pacienteDAO = new PacienteDAO();
+    private EnderecoDAO enderecoDAO = new EnderecoDAO();
     private Scanner scanner = new Scanner(System.in);
-    public MenuPaciente(ArrayList<Paciente>  pacientes) {
-        this.pacientes = pacientes;
-    }
-    public ArrayList<Paciente> exibirMenuPaciente(){
+
+    public void exibirMenuPaciente(){
         int opcao = -1;
 
         while (opcao != 0){
@@ -22,13 +22,14 @@ public class MenuPaciente {
             System.out.println(" 1 - Adicionar Paciente");
             System.out.println(" 2 - Lista pacientes");
             System.out.println(" 3 - Editar Paciente");
+            System.out.println(" 4 - Remover Paciente");
             System.out.println(" 0 - Voltar");
             System.out.print("Digite uma opcao: ");
 
             try {
                 opcao = Integer.parseInt(scanner.nextLine());
             } catch (Exception e) {
-                System.out.println("Digiteuma opção válida.");
+                System.out.println("Digite uma opção válida.");
                 continue;
             }
 
@@ -47,131 +48,161 @@ public class MenuPaciente {
                     break;
                 case 0:
                     System.out.println("Voltando ao menu principal");
-                    return pacientes;
+                    break;
                 default:
                     System.out.println("Opção inválida!");
             }
-
         }
-        return null;
     }
 
     private void adicionarPaciente(){
         System.out.println("=====Novo Paciente=====");
-        System.out.println("Nome: ");
+        System.out.print("Nome: ");
         String nome = scanner.nextLine();
 
-        System.out.println("CPF: ");
+        System.out.print("CPF: ");
         String cpf = scanner.nextLine();
 
-        System.out.println("Email: ");
+        System.out.print("Email: ");
         String email = scanner.nextLine();
 
-        System.out.println("Telefone: ");
+        System.out.print("Telefone: ");
         String telefone = scanner.nextLine();
 
-        // Sem consulta em API
-        System.out.println("Estado: ");
+        System.out.println("=====Endereço=====");
+        System.out.print("Estado: ");
         String estado = scanner.nextLine();
 
-        System.out.println("Cidade: ");
+        System.out.print("Cidade: ");
         String cidade = scanner.nextLine();
 
-        System.out.println("Rua: ");
+        System.out.print("Rua: ");
         String rua = scanner.nextLine();
 
-        System.out.println("Número: ");
+        System.out.print("Número: ");
         String numero = scanner.nextLine();
 
-        System.out.println("CEP: ");
+        System.out.print("CEP: ");
         String cep = scanner.nextLine();
 
-        Endereco endereco = new Endereco(estado, cidade, rua, numero, cep);
-        UUID novoId =  UUID.randomUUID();
+        UUID idPaciente = UUID.randomUUID();
+        UUID idEndereco = UUID.randomUUID();
 
-        Paciente paciente = new Paciente(novoId, nome, cpf, email, telefone, endereco);
-        pacientes.add(paciente);
+        Endereco endereco = new Endereco(idEndereco, estado, cidade, rua, numero, cep);
+        Paciente paciente = new Paciente(idPaciente, nome, cpf, email, telefone, endereco);
 
-        System.out.println("Paciente adicionado com sucesso! ");
+        // Salvar no banco
+        pacienteDAO.insert(paciente);
+        enderecoDAO.insert(endereco, idPaciente.toString());
+
+        System.out.println("Paciente adicionado com sucesso!");
     }
 
     private void listarPacientes(){
-        System.out.println("=====Lista de  Pacientes=====");
+        System.out.println("=====Lista de Pacientes=====");
+
+        // Buscar do banco
+        ArrayList<Paciente> pacientes = pacienteDAO.findAll();
+
         if (pacientes.isEmpty()){
-            System.out.println("Nenhum paciente encontrado! ");
+            System.out.println("Nenhum paciente encontrado!");
             return;
         }
+
         for (Paciente paciente : pacientes){
-            System.out.println(paciente);
+            System.out.println("============================");
+            System.out.println("ID: " + paciente.getIdPaciente());
+            System.out.println("Nome: " + paciente.getNome());
+            System.out.println("CPF: " + paciente.getCpf());
+            System.out.println("Email: " + paciente.getEmail());
+            System.out.println("Telefone: " + paciente.getTelefone());
+
+            // Buscar endereço do paciente
+            Endereco endereco = enderecoDAO.findByPacienteId(paciente.getIdPaciente().toString());
+            if (endereco != null) {
+                System.out.println("Endereço: " + endereco.getRua() + ", " + endereco.getNumero() +
+                        " - " + endereco.getCidade() + "/" + endereco.getEstado() +
+                        " - CEP: " + endereco.getCep());
+            }
+            System.out.println("============================");
         }
     }
 
     private void editarPaciente(){
         System.out.println("=====Editar Paciente=====");
-        System.out.println("Digite o CPF do paciente: ");
+        System.out.print("Digite o CPF do paciente: ");
         String cpf = scanner.nextLine();
-        Paciente paciente = buscarPacientePorCpf(cpf);
+
+        // Buscar do banco
+        Paciente paciente = pacienteDAO.findByCpf(cpf);
+
         if (paciente == null){
             System.out.println("Paciente não encontrado.");
             return;
         }
-        System.out.println("Nome: ");
+
+        System.out.print("Nome: ");
         paciente.setNome(scanner.nextLine());
 
-        System.out.println("CPF: ");
-        paciente.setCpf(scanner.nextLine());
-
-        System.out.println("Email: ");
+        System.out.print("Email: ");
         paciente.setEmail(scanner.nextLine());
 
-        System.out.println("Telefone: ");
+        System.out.print("Telefone: ");
         paciente.setTelefone(scanner.nextLine());
 
-        // troca de endereço
-        System.out.println("===== Novo Endereço =====");
-
-        System.out.println("Estado: ");
+        System.out.println("=====Novo Endereço=====");
+        System.out.print("Estado: ");
         String estado = scanner.nextLine();
 
-        System.out.println("Cidade: ");
+        System.out.print("Cidade: ");
         String cidade = scanner.nextLine();
 
-        System.out.println("Rua: ");
+        System.out.print("Rua: ");
         String rua = scanner.nextLine();
 
-        System.out.println("Número: ");
+        System.out.print("Número: ");
         String numero = scanner.nextLine();
 
-        System.out.println("CEP: ");
+        System.out.print("CEP: ");
         String cep = scanner.nextLine();
 
-        // Necessário para troca de endereço
-        Endereco novoEndereco = new Endereco(estado, cidade, rua, numero, cep);
+        // Buscar endereço existente ou criar novo
+        Endereco endereco = enderecoDAO.findByPacienteId(paciente.getIdPaciente().toString());
 
-        paciente.setEndereco(novoEndereco);
+        if (endereco != null) {
+            // Atualizar endereço existente
+            endereco.setEstado(estado);
+            endereco.setCidade(cidade);
+            endereco.setRua(rua);
+            endereco.setNumero(numero);
+            endereco.setCep(cep);
+            enderecoDAO.update(endereco, paciente.getIdPaciente().toString());
+        } else {
+            // Criar novo endereço
+            UUID idEndereco = UUID.randomUUID();
+            Endereco novoEndereco = new Endereco(idEndereco, estado, cidade, rua, numero, cep);
+            enderecoDAO.insert(novoEndereco, paciente.getIdPaciente().toString());
+        }
 
-        System.out.println("Paciente atualizado com sucesso! ");
+        // Atualizar paciente no banco
+        pacienteDAO.update(paciente);
+
+        System.out.println("Paciente atualizado com sucesso!");
     }
 
     private void removerPaciente(){
-        System.out.println("Digite o CPF do paciente para remover: ");
+        System.out.print("Digite o CPF do paciente para remover: ");
         String cpf = scanner.nextLine();
-        Paciente paciente = buscarPacientePorCpf(cpf);
-        if (paciente == null){
-            pacientes.remove(paciente);
+
+        // Buscar do banco
+        Paciente paciente = pacienteDAO.findByCpf(cpf);
+
+        if (paciente != null){
+            // Deletar do banco (o endereço será deletado automaticamente por CASCADE)
+            pacienteDAO.delete(cpf);
             System.out.println("Paciente removido com sucesso!");
         } else {
-            System.out.println("Paciente não encontrado. ");
+            System.out.println("Paciente não encontrado.");
         }
     }
-
-    private Paciente buscarPacientePorCpf(String cpf) {
-        for (Paciente paciente : pacientes){
-            if (paciente.getCpf().equals(cpf)){
-                return paciente;
-            }
-        }
-        return null;
-    }
-
 }

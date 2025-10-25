@@ -1,7 +1,10 @@
 package com.consultorioMedicoJava.model;
 
+import java.util.UUID;
+
 public class Endereco {
 
+    private UUID idEndereco;
     private String estado;
     private String cidade;
     private String rua;
@@ -10,12 +13,21 @@ public class Endereco {
 
     public Endereco(){};
 
-    public Endereco(String estado, String cidade, String rua, String numero, String cep){
+    public Endereco(UUID idEndereco, String estado, String cidade, String rua, String numero, String cep){
+        this.idEndereco = idEndereco;
         this.estado = estado;
         this.cidade = cidade;
         this.rua = rua;
         this.numero = numero;
         this.cep = cep;
+    }
+
+    public UUID getIdEndereco() {
+        return idEndereco;
+    }
+
+    public void setIdEndereco(UUID idEndereco) {
+        this.idEndereco = idEndereco;
     }
 
     public String getEstado() {

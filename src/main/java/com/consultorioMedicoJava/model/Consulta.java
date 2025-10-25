@@ -16,7 +16,7 @@ public class Consulta {
         this.idConsulta = idConsulta;
         this.data = data;
         this.paciente = paciente;
-        this.status = status; //cancelada , reagendada , confirmada
+        this.status = null;
     }
 
     public UUID getIdConsulta() {
@@ -44,7 +44,23 @@ public class Consulta {
     }
 
     public String getStatus() {
-        return status;
+        if (status != null && status.equalsIgnoreCase("Cancelada")) {
+            return "Cancelada";
+        }
+        if (status != null && status.equalsIgnoreCase("Reagendada")) {
+            return "Reagendada";
+        }
+        if (status != null && status.equalsIgnoreCase("Confirmada")) {
+            if (data != null && data.isBefore(LocalDateTime.now())) {
+                return "Realizada";
+            }
+            return "Confirmada";
+        }
+
+        if (data != null && data.isBefore(LocalDateTime.now())) {
+            return "Realizada";
+        }
+        return "Agendada";
     }
 
     public void setStatus(String status) {

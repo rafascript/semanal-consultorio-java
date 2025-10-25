@@ -1,5 +1,7 @@
 package com.consultorioMedicoJava.tui;
 
+import com.consultorioMedicoJava.dao.EnderecoDAO;
+import com.consultorioMedicoJava.dao.PacienteDAO;
 import com.consultorioMedicoJava.model.Endereco;
 import com.consultorioMedicoJava.model.Paciente;
 import java.util.ArrayList;
@@ -8,12 +10,9 @@ import java.util.UUID;
 
 public class MenuEndereco {
 
-    private ArrayList<Paciente> pacientes; // Para vincular endereços aos pacientes
+    private EnderecoDAO enderecoDAO = new EnderecoDAO();
+    private PacienteDAO pacienteDAO = new PacienteDAO();
     private Scanner scanner = new Scanner(System.in);
-
-    public MenuEndereco(ArrayList<Paciente> pacientes) {
-        this.pacientes = pacientes;
-    }
 
     public void exibirMenuEndereco() {
         int opcao = -1;
@@ -59,11 +58,13 @@ public class MenuEndereco {
     private void adicionarEndereco() {
         System.out.println("=====Adicionar Endereço=====");
 
+        // Buscar pacientes do banco
+        ArrayList<Paciente> pacientes = pacienteDAO.findAll();
+
         if (pacientes.isEmpty()) {
             System.out.println("Nenhum paciente cadastrado! Cadastre um paciente primeiro.");
             return;
         }
-
 
         System.out.println("Pacientes cadastrados:");
         for (int i = 0; i < pacientes.size(); i++) {
@@ -72,7 +73,13 @@ public class MenuEndereco {
         }
 
         System.out.print("Escolha o número do paciente: ");
-        int indicePaciente = Integer.parseInt(scanner.nextLine());
+        int indicePaciente;
+        try {
+            indicePaciente = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Índice inválido!");
+            return;
+        }
 
         if (indicePaciente < 0 || indicePaciente >= pacientes.size()) {
             System.out.println("Índice inválido!");
@@ -96,14 +103,20 @@ public class MenuEndereco {
         System.out.print("CEP: ");
         String cep = scanner.nextLine();
 
-        Endereco endereco = new Endereco(estado, cidade, rua, numero, cep);
-        paciente.setEndereco(endereco);
+        UUID idEndereco = UUID.randomUUID();
+        Endereco endereco = new Endereco(idEndereco, estado, cidade, rua, numero, cep);
+
+        // Salvar no banco
+        enderecoDAO.insert(endereco, paciente.getIdPaciente().toString());
 
         System.out.println("Endereço adicionado com sucesso ao paciente " + paciente.getNome() + "!");
     }
 
     private void listarEnderecos() {
         System.out.println("=====Lista de Endereços=====");
+
+        // Buscar pacientes do banco
+        ArrayList<Paciente> pacientes = pacienteDAO.findAll();
 
         if (pacientes.isEmpty()) {
             System.out.println("Nenhum paciente cadastrado.");
@@ -113,16 +126,19 @@ public class MenuEndereco {
         boolean temEndereco = false;
 
         for (Paciente p : pacientes) {
-            if (p.getEndereco() != null) {
+            // Buscar endereço do paciente no banco
+            Endereco endereco = enderecoDAO.findByPacienteId(p.getIdPaciente().toString());
+
+            if (endereco != null) {
                 temEndereco = true;
                 System.out.println("----------------------------");
                 System.out.println("Paciente: " + p.getNome());
                 System.out.println("CPF: " + p.getCpf());
-                System.out.println("Estado: " + p.getEndereco().getEstado());
-                System.out.println("Cidade: " + p.getEndereco().getCidade());
-                System.out.println("Rua: " + p.getEndereco().getRua());
-                System.out.println("Número: " + p.getEndereco().getNumero());
-                System.out.println("CEP: " + p.getEndereco().getCep());
+                System.out.println("Estado: " + endereco.getEstado());
+                System.out.println("Cidade: " + endereco.getCidade());
+                System.out.println("Rua: " + endereco.getRua());
+                System.out.println("Número: " + endereco.getNumero());
+                System.out.println("CEP: " + endereco.getCep());
                 System.out.println("----------------------------");
             }
         }
@@ -137,14 +153,18 @@ public class MenuEndereco {
         System.out.print("Digite o CPF do paciente: ");
         String cpf = scanner.nextLine();
 
-        Paciente paciente = buscarPacientePorCpf(cpf);
+        // Buscar paciente do banco
+        Paciente paciente = pacienteDAO.findByCpf(cpf);
 
         if (paciente == null) {
             System.out.println("Paciente não encontrado.");
             return;
         }
 
-        if (paciente.getEndereco() == null) {
+        // Buscar endereço do banco
+        Endereco endereco = enderecoDAO.findByPacienteId(paciente.getIdPaciente().toString());
+
+        if (endereco == null) {
             System.out.println("Este paciente não possui endereço cadastrado.");
             return;
         }
@@ -165,8 +185,15 @@ public class MenuEndereco {
         System.out.print("CEP: ");
         String cep = scanner.nextLine();
 
-        Endereco novoEndereco = new Endereco(estado, cidade, rua, numero, cep);
-        paciente.setEndereco(novoEndereco);
+        // Atualizar endereço
+        endereco.setEstado(estado);
+        endereco.setCidade(cidade);
+        endereco.setRua(rua);
+        endereco.setNumero(numero);
+        endereco.setCep(cep);
+
+        // Salvar no banco
+        enderecoDAO.update(endereco, paciente.getIdPaciente().toString());
 
         System.out.println("Endereço atualizado com sucesso!");
     }
@@ -176,30 +203,25 @@ public class MenuEndereco {
         System.out.print("Digite o CPF do paciente: ");
         String cpf = scanner.nextLine();
 
-        Paciente paciente = buscarPacientePorCpf(cpf);
+        // Buscar paciente do banco
+        Paciente paciente = pacienteDAO.findByCpf(cpf);
 
         if (paciente == null) {
             System.out.println("Paciente não encontrado.");
             return;
         }
 
-        if (paciente.getEndereco() == null) {
+        // Buscar endereço do banco
+        Endereco endereco = enderecoDAO.findByPacienteId(paciente.getIdPaciente().toString());
+
+        if (endereco == null) {
             System.out.println("Este paciente não possui endereço cadastrado.");
             return;
         }
 
-        paciente.setEndereco(null);
+        // Deletar do banco
+        enderecoDAO.delete(paciente.getIdPaciente().toString());
+
         System.out.println("Endereço removido com sucesso!");
     }
-
-
-    private Paciente buscarPacientePorCpf(String cpf) {
-        for (Paciente p : pacientes) {
-            if (p.getCpf().equals(cpf)) {
-                return p;
-            }
-        }
-        return null;
-    }
 }
-

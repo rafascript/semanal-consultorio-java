@@ -23,6 +23,14 @@ public class Paciente {
         this.endereco = endereco;
     }
 
+    public UUID getIdPaciente() {
+        return idPaciente;
+    }
+
+    public void setIdPaciente(UUID idPaciente) {
+        this.idPaciente = idPaciente;
+    }
+
     public String getNome() {
         return nome;
     }

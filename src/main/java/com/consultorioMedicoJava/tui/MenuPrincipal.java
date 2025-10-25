@@ -1,27 +1,24 @@
 package com.consultorioMedicoJava.tui;
 
-import com.consultorioMedicoJava.model.Paciente;
-import com.consultorioMedicoJava.tui.MenuPaciente;
-
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class MenuPrincipal {
 
     private Scanner scanner = new Scanner(System.in);
-    private ArrayList<Paciente> lista_pacientes = new ArrayList<>();
-    MenuPaciente pacientes = new MenuPaciente(lista_pacientes);
-    MenuConsulta consulta = new MenuConsulta(lista_pacientes);
+    private MenuPaciente menuPaciente = new MenuPaciente();
+    private MenuEndereco menuEndereco = new MenuEndereco();
+    private MenuConsulta menuConsulta = new MenuConsulta();
 
     public void exibirMenuPrincipal() {
         int opcao = -1;
+
         while (opcao != 0) {
-            System.out.println("==========Menu=========");
-            System.out.println(" 1 - Gerenciar Paciente");
+            System.out.println("\n==========Menu Principal=========");
+            System.out.println(" 1 - Gerenciar Pacientes");
             System.out.println(" 2 - Gerenciar Endereços");
             System.out.println(" 3 - Gerenciar Consultas");
             System.out.println(" 0 - Sair");
-            System.out.print("Digite uma opcao: ");
+            System.out.print("Digite uma opção: ");
 
             try {
                 opcao = Integer.parseInt(scanner.nextLine());
@@ -32,16 +29,16 @@ public class MenuPrincipal {
 
             switch (opcao) {
                 case 1:
-                    lista_pacientes = pacientes.exibirMenuPaciente();
+                    menuPaciente.exibirMenuPaciente();
                     break;
                 case 2:
-                    System.out.println("Menu de Endereços - em desenvolvimento");
+                    menuEndereco.exibirMenuEndereco();
                     break;
                 case 3:
-                    lista_pacientes = consulta.exibirMenuConsulta();
+                    menuConsulta.exibirMenuConsulta();
                     break;
                 case 0:
-                    System.out.println("Sair");
+                    System.out.println("Encerrando sistema...");
                     break;
                 default:
                     System.out.println("Opção inválida! Tente novamente.");
@@ -49,5 +46,4 @@ public class MenuPrincipal {
         }
         scanner.close();
     }
-
 }
