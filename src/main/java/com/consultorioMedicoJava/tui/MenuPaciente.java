@@ -11,8 +11,10 @@ public class MenuPaciente {
 
     private ArrayList<Paciente> pacientes = new ArrayList<>();
     private Scanner scanner = new Scanner(System.in);
-
-    public void exibirMenuPaciente(){
+    public MenuPaciente(ArrayList<Paciente>  pacientes) {
+        this.pacientes = pacientes;
+    }
+    public ArrayList<Paciente> exibirMenuPaciente(){
         int opcao = -1;
 
         while (opcao != 0){
@@ -45,12 +47,13 @@ public class MenuPaciente {
                     break;
                 case 0:
                     System.out.println("Voltando ao menu principal");
-                    break;
+                    return pacientes;
                 default:
                     System.out.println("Opção inválida!");
             }
 
         }
+        return null;
     }
 
     private void adicionarPaciente(){
@@ -121,7 +124,31 @@ public class MenuPaciente {
         System.out.println("Email: ");
         paciente.setEmail(scanner.nextLine());
 
+        System.out.println("Telefone: ");
+        paciente.setTelefone(scanner.nextLine());
 
+        // troca de endereço
+        System.out.println("===== Novo Endereço =====");
+
+        System.out.println("Estado: ");
+        String estado = scanner.nextLine();
+
+        System.out.println("Cidade: ");
+        String cidade = scanner.nextLine();
+
+        System.out.println("Rua: ");
+        String rua = scanner.nextLine();
+
+        System.out.println("Número: ");
+        String numero = scanner.nextLine();
+
+        System.out.println("CEP: ");
+        String cep = scanner.nextLine();
+
+        // Necessário para troca de endereço
+        Endereco novoEndereco = new Endereco(estado, cidade, rua, numero, cep);
+
+        paciente.setEndereco(novoEndereco);
 
         System.out.println("Paciente atualizado com sucesso! ");
     }

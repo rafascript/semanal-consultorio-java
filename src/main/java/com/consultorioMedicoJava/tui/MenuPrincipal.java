@@ -1,12 +1,17 @@
 package com.consultorioMedicoJava.tui;
 
+import com.consultorioMedicoJava.model.Paciente;
 import com.consultorioMedicoJava.tui.MenuPaciente;
+
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class MenuPrincipal {
 
     private Scanner scanner = new Scanner(System.in);
-    MenuPaciente pacientes = new MenuPaciente();
+    private ArrayList<Paciente> lista_pacientes = new ArrayList<>();
+    MenuPaciente pacientes = new MenuPaciente(lista_pacientes);
+    MenuConsulta consulta = new MenuConsulta(lista_pacientes);
 
     public void exibirMenuPrincipal() {
         int opcao = -1;
@@ -27,13 +32,13 @@ public class MenuPrincipal {
 
             switch (opcao) {
                 case 1:
-                    pacientes.exibirMenuPaciente();
+                    lista_pacientes = pacientes.exibirMenuPaciente();
                     break;
                 case 2:
                     System.out.println("Menu de Endereços - em desenvolvimento");
                     break;
                 case 3:
-                    System.out.println("Menu de Consultas - em desenvolvimento");
+                    lista_pacientes = consulta.exibirMenuConsulta();
                     break;
                 case 0:
                     System.out.println("Sair");
