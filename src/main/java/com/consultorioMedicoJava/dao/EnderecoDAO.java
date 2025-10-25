@@ -24,6 +24,17 @@ public class EnderecoDAO {
             pstmt.executeUpdate();
             System.out.println("Endereço inserido!");
 
+            // Auditoria manual (trigger não existente para endereco)
+            String sqlAudit = "INSERT INTO auditoria (operacao, tabela, registro_id) VALUES (?, ?, ?)";
+            try (PreparedStatement pa = conn.prepareStatement(sqlAudit)) {
+                pa.setString(1, "INSERT");
+                pa.setString(2, "endereco");
+                pa.setString(3, endereco.getIdEndereco().toString());
+                pa.executeUpdate();
+            } catch (SQLException ex) {
+                System.out.println("Erro ao inserir auditoria (endereco insert): " + ex.getMessage());
+            }
+
         } catch (SQLException e) {
             System.out.println("Erro ao inserir endereço: " + e.getMessage());
         }
@@ -69,8 +80,22 @@ public class EnderecoDAO {
             pstmt.setString(5, endereco.getCep());
             pstmt.setString(6, pacienteId);
 
-            pstmt.executeUpdate();
-            System.out.println("Endereço atualizado!");
+            int updated = pstmt.executeUpdate();
+            if (updated > 0) {
+                System.out.println("Endereço atualizado!");
+
+                String sqlAudit = "INSERT INTO auditoria (operacao, tabela, registro_id) VALUES (?, ?, ?)";
+                try (PreparedStatement pa = conn.prepareStatement(sqlAudit)) {
+                    pa.setString(1, "UPDATE");
+                    pa.setString(2, "endereco");
+                    pa.setString(3, endereco.getIdEndereco() != null ? endereco.getIdEndereco().toString() : null);
+                    pa.executeUpdate();
+                } catch (SQLException ex) {
+                    System.out.println("Erro ao inserir auditoria (endereco update): " + ex.getMessage());
+                }
+            } else {
+                System.out.println("Nenhum endereço atualizado.");
+            }
 
         } catch (SQLException e) {
             System.out.println("Erro ao atualizar endereço: " + e.getMessage());
@@ -78,14 +103,39 @@ public class EnderecoDAO {
     }
 
     public void delete(String pacienteId) {
+        String sqlFetch = "SELECT id_endereco FROM endereco WHERE paciente_id = ?";
         String sql = "DELETE FROM endereco WHERE paciente_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement fetch = conn.prepareStatement(sqlFetch)) {
 
-            pstmt.setString(1, pacienteId);
-            pstmt.executeUpdate();
-            System.out.println("Endereço removido!");
+            fetch.setString(1, pacienteId);
+            ResultSet rs = fetch.executeQuery();
+            String idEndereco = null;
+            if (rs.next()) {
+                idEndereco = rs.getString("id_endereco");
+            }
+
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, pacienteId);
+                int deleted = pstmt.executeUpdate();
+                if (deleted > 0) {
+                    System.out.println("Endereço removido!");
+
+                    String sqlAudit = "INSERT INTO auditoria (operacao, tabela, registro_id) VALUES (?, ?, ?)";
+                    try (PreparedStatement pa = conn.prepareStatement(sqlAudit)) {
+                        pa.setString(1, "DELETE");
+                        pa.setString(2, "endereco");
+                        pa.setString(3, idEndereco);
+                        pa.executeUpdate();
+                    } catch (SQLException ex) {
+                        System.out.println("Erro ao inserir auditoria (endereco delete): " + ex.getMessage());
+                    }
+
+                } else {
+                    System.out.println("Nenhum endereço removido.");
+                }
+            }
 
         } catch (SQLException e) {
             System.out.println("Erro ao remover endereço: " + e.getMessage());

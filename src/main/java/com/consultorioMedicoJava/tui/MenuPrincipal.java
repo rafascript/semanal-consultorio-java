@@ -17,6 +17,7 @@ public class MenuPrincipal {
             System.out.println(" 1 - Gerenciar Pacientes");
             System.out.println(" 2 - Gerenciar Endereços");
             System.out.println(" 3 - Gerenciar Consultas");
+            System.out.println(" 4 - Visualizar Auditoria");
             System.out.println(" 0 - Sair");
             System.out.print("Digite uma opção: ");
 
@@ -36,6 +37,9 @@ public class MenuPrincipal {
                     break;
                 case 3:
                     menuConsulta.exibirMenuConsulta();
+                    break;
+                case 4:
+                    new MenuAuditoria().exibirMenuAuditoria();
                     break;
                 case 0:
                     System.out.println("Encerrando sistema...");
